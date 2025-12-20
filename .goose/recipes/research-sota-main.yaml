@@ -1,0 +1,236 @@
+version: "1.0.0"
+title: "Research: State of the Art + Goal Strategies (extension-agnostic)"
+description: "Orchestrates subrecipes that (when web tools are available) discover, triage, extract, and synthesize state-of-the-art summaries and goal strategies with references."
+
+author:
+  contact: "project"
+
+parameters:
+  - key: topics
+    input_type: string
+    requirement: required
+    description: "Topics to research (comma-separated list or paragraph)."
+
+  - key: goals
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Optional goals. If provided, include strategies and outlines suggested by sources."
+
+  - key: time_horizon
+    input_type: string
+    requirement: optional
+    default: "last 24 months"
+    description: "Recency guidance for sources and queries."
+
+  - key: max_sources
+    input_type: number
+    requirement: optional
+    default: "20"
+    description: "Maximum number of sources to select and cite."
+
+  - key: max_candidates
+    input_type: number
+    requirement: optional
+    default: "50"
+    description: "Maximum candidate URLs to return prior to triage."
+
+  - key: output_detail
+    input_type: select
+    requirement: optional
+    default: "standard"
+    options: ["concise", "standard", "deep"]
+    description: "Controls summary depth and number of strategies per goal."
+
+  - key: seed_sources_text
+    input_type: string
+    requirement: optional
+    default: ""
+    description: |
+      Optional seed sources (URLs and/or notes). Paste one URL per line or a markdown list.
+      Use this if search/browse tools are not available or to constrain sources.
+
+  - key: seed_sources_file
+    input_type: file
+    requirement: user_prompt
+    description: |
+      Optional file containing seed URLs/notes (one URL per line or markdown list).
+      If provided, goose will substitute the *file contents* into the prompt.
+
+activities:
+  - "Research state of the art for topics"
+  - "Add goal-oriented strategies with outlines"
+  - "Generate a references bibliography"
+
+sub_recipes:
+  - name: normalize
+    path: "{{ recipe_dir }}/research-sota/subrecipes/00-normalize-inputs.yaml"
+    values:
+      topics: "{{ topics }}"
+      goals: "{{ goals }}"
+      time_horizon: "{{ time_horizon }}"
+
+  - name: discover_sources
+    path: "{{ recipe_dir }}/research-sota/subrecipes/01-discover-sources.yaml"
+    values:
+      topics: "{{ topics }}"
+      goals: "{{ goals }}"
+      time_horizon: "{{ time_horizon }}"
+      max_candidates: "{{ max_candidates }}"
+      seed_sources_text: "{{ seed_sources_text }}"
+      seed_sources_file: "{{ seed_sources_file }}"
+
+  - name: triage
+    path: "{{ recipe_dir }}/research-sota/subrecipes/02-triage-and-rank.yaml"
+    values:
+      max_sources: "{{ max_sources }}"
+      time_horizon: "{{ time_horizon }}"
+
+  - name: extract
+    path: "{{ recipe_dir }}/research-sota/subrecipes/03-fetch-and-extract.yaml"
+
+  - name: synthesize_topics
+    path: "{{ recipe_dir }}/research-sota/subrecipes/04-sota-synthesis-by-topic.yaml"
+
+  - name: strategies
+    path: "{{ recipe_dir }}/research-sota/subrecipes/05-goal-strategies.yaml"
+    values:
+      output_detail: "{{ output_detail }}"
+
+  - name: qc
+    path: "{{ recipe_dir }}/research-sota/subrecipes/06-bibliography-and-qc.yaml"
+
+instructions: |
+  You are orchestrating a research workflow using subrecipes.
+
+  ## Critical: extension-agnostic web access
+  Some subrecipes will attempt to search/fetch the web. Do NOT assume any tool names.
+  Use whatever tools are available by capability/description.
+
+  ## Execution
+  - Run subrecipes in order.
+  - After each subrecipe completes, retain its final JSON output in the conversation context for the next subrecipe.
+  - Use accessed_at = 2025-12-20 for all references (this session date).
+
+  ## If web tools are unavailable
+  - Continue using seed_sources_text and/or seed_sources_file if provided.
+  - Otherwise request the user enable a web-search/browsing extension and rerun.
+
+prompt: |
+  Research the following.
+
+  Topics:
+  {{ topics }}
+
+  Goals (optional):
+  {{ goals }}
+
+  Constraints:
+  - Time horizon: {{ time_horizon }}
+  - Max candidates: {{ max_candidates }}
+  - Max sources: {{ max_sources }}
+  - Detail level: {{ output_detail }}
+
+  Seed sources (optional):
+  - Pasted text:
+  {{ seed_sources_text }}
+
+  - File contents (if provided):
+  {{ seed_sources_file }}
+
+  Execute the workflow and end with the final JSON response.
+
+response:
+  json_schema:
+    type: object
+    properties:
+      topics:
+        type: array
+        items:
+          type: object
+          properties:
+            topic: { type: string }
+            sota_summary: { type: string }
+            key_techniques:
+              type: array
+              items: { type: string }
+            benchmarks_and_metrics:
+              type: array
+              items: { type: string }
+            open_problems:
+              type: array
+              items: { type: string }
+            references:
+              type: array
+              items:
+                type: object
+                properties:
+                  title: { type: string }
+                  url: { type: string }
+                  published_at: { type: string }
+                  accessed_at: { type: string }
+                required: ["title", "url", "accessed_at"]
+          required: ["topic", "sota_summary", "references"]
+
+      goals:
+        type: array
+        items:
+          type: object
+          properties:
+            goal: { type: string }
+            strategies:
+              type: array
+              items:
+                type: object
+                properties:
+                  name: { type: string }
+                  rationale: { type: string }
+                  outline_steps:
+                    type: array
+                    items: { type: string }
+                  prerequisites:
+                    type: array
+                    items: { type: string }
+                  tradeoffs_and_risks:
+                    type: array
+                    items: { type: string }
+                  references:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title: { type: string }
+                        url: { type: string }
+                        published_at: { type: string }
+                        accessed_at: { type: string }
+                      required: ["title", "url", "accessed_at"]
+                required: ["name", "outline_steps", "references"]
+          required: ["goal", "strategies"]
+
+      global_references:
+        type: array
+        items:
+          type: object
+          properties:
+            title: { type: string }
+            url: { type: string }
+            published_at: { type: string }
+            accessed_at: { type: string }
+          required: ["title", "url", "accessed_at"]
+
+      limitations:
+        type: array
+        items: { type: string }
+
+      qc_summary:
+        type: object
+        properties:
+          candidate_count: { type: number }
+          selected_source_count: { type: number }
+          evidence_count: { type: number }
+          topic_count: { type: number }
+          goal_count: { type: number }
+          reference_count: { type: number }
+        required: ["reference_count"]
+
+    required: ["topics", "global_references"]

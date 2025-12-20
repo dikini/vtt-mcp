@@ -1,0 +1,83 @@
+version: "1.0.0"
+title: "Research SOTA: Triage + Rank Sources"
+description: "Deduplicate, classify, and select the best sources from discovered candidates."
+
+parameters:
+  - key: max_sources
+    input_type: number
+    requirement: optional
+    default: "20"
+    description: "Maximum number of sources to select."
+
+  - key: time_horizon
+    input_type: string
+    requirement: optional
+    default: "last 24 months"
+    description: "Recency guidance for source selection."
+
+  - key: candidates_json
+    input_type: string
+    requirement: optional
+    default: ""
+    description: |
+      Optional: the JSON output from 01-discover-sources. If empty, infer candidates from conversation context.
+
+instructions: |
+  You are a source triage assistant.
+
+  Inputs:
+  - Prefer to read candidates from candidates_json if provided; otherwise, locate the most recent candidate list in conversation context.
+
+  Tasks:
+  - Deduplicate candidates by URL (normalize obvious tracking params when safe).
+  - Rank sources for usefulness, credibility, and relevance.
+  - Prefer surveys, benchmark reports, standards, academic papers, and official documentation.
+  - Use time_horizon={{ time_horizon }} as a guideline, but do not discard seminal older work if needed.
+
+  Output:
+  - Select up to max_sources={{ max_sources }} URLs.
+  - Provide a brief why_selected for each selected source.
+  - Output MUST be valid JSON matching the response schema.
+
+prompt: |
+  Triage and rank candidate sources.
+
+  candidates_json (optional):
+  {{ candidates_json }}
+
+  Constraints:
+  - max_sources: {{ max_sources }}
+  - time_horizon: {{ time_horizon }}
+
+response:
+  json_schema:
+    type: object
+    properties:
+      selected_sources:
+        type: array
+        items:
+          type: object
+          properties:
+            url: { type: string }
+            title: { type: string }
+            source_type_guess: { type: string }
+            priority:
+              type: number
+              description: "1=highest priority"
+            why_selected: { type: string }
+          required: ["url", "priority", "why_selected"]
+      rejected_sources:
+        type: array
+        items:
+          type: object
+          properties:
+            url: { type: string }
+            reason: { type: string }
+          required: ["url", "reason"]
+      dedupe_notes:
+        type: array
+        items: { type: string }
+      limitations:
+        type: array
+        items: { type: string }
+    required: ["selected_sources"]

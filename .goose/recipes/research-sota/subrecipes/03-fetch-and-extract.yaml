@@ -1,0 +1,83 @@
+version: "1.0.0"
+title: "Research SOTA: Fetch + Extract Evidence"
+description: "Fetch/read selected sources (if possible) and extract structured evidence for synthesis."
+
+parameters:
+  - key: selected_sources_json
+    input_type: string
+    requirement: optional
+    default: ""
+    description: |
+      Optional: JSON output from 02-triage-and-rank. If empty, infer selected sources from conversation context.
+
+instructions: |
+  You are an evidence extraction agent.
+
+  ## Extension-agnostic tooling contract
+  - Inspect available tools.
+  - Use any tool that can fetch/read a URL (URL -> content/snippet/markdown/text).
+  - Do NOT assume a specific tool name.
+
+  ## Extraction requirements
+  For each selected source:
+  - Determine basic metadata: title (if available), published_at (if easily discoverable), accessed_at="2025-12-20".
+  - Extract:
+    - key_claims: 3-8 bullets
+    - methods_or_approaches: 2-10 bullets
+    - benchmarks_or_metrics: 0-10 bullets
+    - tradeoffs_or_caveats: 0-10 bullets
+  - If you cannot fetch full content, use available snippets and clearly state limitations.
+
+  Output MUST be valid JSON matching the response schema.
+
+prompt: |
+  Extract evidence for the selected sources.
+
+  selected_sources_json (optional):
+  {{ selected_sources_json }}
+
+response:
+  json_schema:
+    type: object
+    properties:
+      tool_capabilities:
+        type: object
+        properties:
+          fetch_available: { type: boolean }
+          tool_notes: { type: string }
+        required: ["fetch_available"]
+
+      evidence:
+        type: array
+        items:
+          type: object
+          properties:
+            url: { type: string }
+            title: { type: string }
+            published_at: { type: string }
+            accessed_at: { type: string }
+            key_claims:
+              type: array
+              items: { type: string }
+            methods_or_approaches:
+              type: array
+              items: { type: string }
+            benchmarks_or_metrics:
+              type: array
+              items: { type: string }
+            tradeoffs_or_caveats:
+              type: array
+              items: { type: string }
+            quotes_or_snippets:
+              type: array
+              items: { type: string }
+            extraction_limitations:
+              type: array
+              items: { type: string }
+          required: ["url", "accessed_at", "key_claims", "methods_or_approaches"]
+
+      limitations:
+        type: array
+        items: { type: string }
+
+    required: ["tool_capabilities", "evidence"]

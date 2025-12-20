@@ -1,0 +1,167 @@
+version: "1.0.0"
+title: "Research SOTA: Discover Sources"
+description: "Extension-agnostic discovery of candidate sources for the given topics/goals. Searches the web when tools are available; otherwise relies on seed sources."
+
+parameters:
+  - key: topics
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "(Optional) Topics (raw). If not provided, infer from conversation context."
+
+  - key: goals
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "(Optional) Goals (raw). If not provided, infer from conversation context."
+
+  - key: topic_queries
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "(Optional) Newline-separated query list for topics. Use if provided; otherwise derive queries."
+
+  - key: goal_queries
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "(Optional) Newline-separated query list for goals. Use if provided; otherwise derive queries."
+
+  - key: time_horizon
+    input_type: string
+    requirement: optional
+    default: "last 24 months"
+    description: "Recency guidance to incorporate into queries when relevant."
+
+  - key: max_candidates
+    input_type: number
+    requirement: optional
+    default: "50"
+    description: "Maximum candidate URLs to return (before triage/ranking)."
+
+  - key: seed_sources_text
+    input_type: string
+    requirement: optional
+    default: ""
+    description: |
+      Optional seed sources to include (URLs and/or notes). If you have no web tools,
+      this becomes the primary corpus.
+
+  - key: seed_sources_file
+    input_type: string
+    requirement: optional
+    default: ""
+    description: |
+      Optional seed sources from a file (pre-loaded by the orchestrator). Treat this as plain text contents.
+
+instructions: |
+  You are a research librarian. Your sole job is to produce a high-recall list of candidate sources (URLs) for topics and goals.
+
+  ## Extension-agnostic tooling contract (do NOT assume tool names)
+  1) Inspect what tools are available.
+  2) Prefer using tools that can:
+     - SEARCH: take a query string and return results that include URLs
+     - FETCH/READ: take a URL and return page content or a snippet
+  3) Choose tools by capability/description, not by their exact names.
+
+  ## Fallback behavior
+  - If you have NO usable search tool:
+    - If seed_sources_text and/or seed_sources_file contain URLs, return those as candidates and (if a fetch tool exists) fetch titles/snippets.
+    - Otherwise, explicitly report that web search is unavailable and request the user enable a web/search extension.
+
+  ## Candidate quality guidance
+  - Prefer reputable, high-signal sources: surveys, benchmark reports, standards, academic papers, and official documentation.
+  - Use time_horizon={{ time_horizon }} as a guideline.
+  - Aim for diversity of source types where possible.
+  - Do not do deep synthesis here; just gather.
+
+  ## Output requirements
+  - Output MUST be valid JSON matching the response schema.
+  - Include accessed_at = "2025-12-20" for all candidates (since this is when we discovered them).
+  - For each candidate, include the field 'discovered_from' with one of: "topic", "goal", "seed".
+
+prompt: |
+  Discover candidate sources.
+
+  Inputs (some may be blank; infer from context when needed):
+  - Topics (raw):
+    {{ topics }}
+  - Goals (raw):
+    {{ goals }}
+  - Topic queries (newline-separated, optional):
+    {{ topic_queries }}
+  - Goal queries (newline-separated, optional):
+    {{ goal_queries }}
+  - Seed sources (optional):
+    - Pasted text:
+      {{ seed_sources_text }}
+
+    - File contents (if provided):
+      {{ seed_sources_file }}
+
+  Constraints:
+  - time horizon: {{ time_horizon }}
+  - max candidates: {{ max_candidates }}
+
+  Return candidates as JSON.
+
+response:
+  json_schema:
+    type: object
+    properties:
+      tool_capabilities:
+        type: object
+        properties:
+          search_available:
+            type: boolean
+            description: "Whether a web search-capable tool was available and used"
+          fetch_available:
+            type: boolean
+            description: "Whether a URL fetch/read-capable tool was available and used"
+          tool_notes:
+            type: string
+            description: "Brief note on which tools were used or why not"
+        required: [search_available, fetch_available]
+
+      candidates:
+        type: array
+        items:
+          type: object
+          properties:
+            url:
+              type: string
+            title:
+              type: string
+            snippet:
+              type: string
+            query:
+              type: string
+              description: "Query used to find this candidate (if any)"
+            discovered_from:
+              type: string
+              enum: ["topic", "goal", "seed"]
+            source_type_guess:
+              type: string
+              description: "E.g., paper, survey, benchmark, vendor-doc, standard, blog"
+            published_at:
+              type: string
+              description: "If quickly discoverable from snippet/metadata; otherwise omit"
+            accessed_at:
+              type: string
+              description: "Date the URL was discovered"
+          required: ["url", "discovered_from", "accessed_at"]
+
+      limitations:
+        type: array
+        items:
+          type: string
+
+      needs_user_action:
+        type: boolean
+        description: "True if you could not perform web discovery and need the user to enable an extension or provide seeds"
+
+      user_action_request:
+        type: string
+        description: "If needs_user_action=true, a short instruction for the user"
+
+    required: ["tool_capabilities", "candidates", "needs_user_action"]

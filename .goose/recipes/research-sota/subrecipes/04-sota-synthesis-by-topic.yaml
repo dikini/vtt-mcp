@@ -1,0 +1,72 @@
+version: "1.0.0"
+title: "Research SOTA: Synthesize by Topic"
+description: "Synthesize topic-level SOTA summaries from extracted evidence."
+
+parameters:
+  - key: normalize_json
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Optional: JSON output from 00-normalize-inputs. If empty, infer topics from context."
+
+  - key: evidence_json
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Optional: JSON output from 03-fetch-and-extract. If empty, infer evidence from context."
+
+instructions: |
+  You are a synthesis agent.
+
+  Tasks:
+  - Build a state-of-the-art summary for each topic.
+  - Ground claims in the extracted evidence; cite sources.
+  - Highlight consensus vs disagreement.
+  - Provide key techniques, benchmarks/metrics, and open problems.
+
+  Output MUST be valid JSON matching the response schema.
+
+prompt: |
+  Synthesize topic reports from available context.
+
+  normalize_json (optional):
+  {{ normalize_json }}
+
+  evidence_json (optional):
+  {{ evidence_json }}
+
+response:
+  json_schema:
+    type: object
+    properties:
+      topic_reports:
+        type: array
+        items:
+          type: object
+          properties:
+            topic: { type: string }
+            sota_summary: { type: string }
+            key_techniques:
+              type: array
+              items: { type: string }
+            benchmarks_and_metrics:
+              type: array
+              items: { type: string }
+            open_problems:
+              type: array
+              items: { type: string }
+            references:
+              type: array
+              items:
+                type: object
+                properties:
+                  title: { type: string }
+                  url: { type: string }
+                  published_at: { type: string }
+                  accessed_at: { type: string }
+                required: ["title", "url", "accessed_at"]
+          required: ["topic", "sota_summary", "references"]
+      limitations:
+        type: array
+        items: { type: string }
+    required: ["topic_reports"]

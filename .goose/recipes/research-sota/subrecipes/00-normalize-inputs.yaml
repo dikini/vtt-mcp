@@ -1,0 +1,74 @@
+version: "1.0.0"
+title: "Research SOTA: Normalize Inputs"
+description: "Normalize topics/goals and produce a query plan (topic/goal queries)."
+
+parameters:
+  - key: topics
+    input_type: string
+    requirement: required
+    description: "Topics to research (comma-separated list or paragraph)."
+
+  - key: goals
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Optional goals; if provided, we will generate strategy-oriented queries too."
+
+  - key: time_horizon
+    input_type: string
+    requirement: optional
+    default: "last 24 months"
+    description: "Recency guidance to incorporate into queries."
+
+instructions: |
+  You convert raw user inputs into normalized arrays and a query plan.
+
+  Requirements:
+  - Normalize topics into an array of concise topic strings.
+  - Normalize goals into an array of concise goal strings.
+  - Create search queries for each topic (SOTA queries) and each goal (strategy queries).
+  - Incorporate time_horizon={{ time_horizon }} into queries where relevant.
+  - Output MUST be valid JSON matching the response schema.
+
+prompt: |
+  Normalize these inputs and produce a query plan.
+
+  Topics (raw):
+  {{ topics }}
+
+  Goals (raw, optional):
+  {{ goals }}
+
+  Time horizon guidance:
+  {{ time_horizon }}
+
+response:
+  json_schema:
+    type: object
+    properties:
+      topics:
+        type: array
+        items: { type: string }
+      goals:
+        type: array
+        items: { type: string }
+      topic_queries:
+        type: array
+        items:
+          type: object
+          properties:
+            topic: { type: string }
+            query: { type: string }
+          required: ["topic", "query"]
+      goal_queries:
+        type: array
+        items:
+          type: object
+          properties:
+            goal: { type: string }
+            query: { type: string }
+          required: ["goal", "query"]
+      assumptions:
+        type: array
+        items: { type: string }
+    required: ["topics", "goals", "topic_queries", "goal_queries"]

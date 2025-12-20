@@ -1,0 +1,91 @@
+version: "1.0.0"
+title: "Research SOTA: Goal Strategies"
+description: "If goals were provided, propose web-grounded strategies with outlines and references."
+
+parameters:
+  - key: normalize_json
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Optional: JSON output from 00-normalize-inputs. If empty, infer goals from context."
+
+  - key: evidence_json
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Optional: JSON output from 03-fetch-and-extract. If empty, infer evidence from context."
+
+  - key: output_detail
+    input_type: select
+    requirement: optional
+    default: "standard"
+    options: ["concise", "standard", "deep"]
+    description: "Controls number of strategies and outline depth."
+
+instructions: |
+  You propose strategies to achieve user goals.
+
+  Rules:
+  - If there are no goals, output goal_reports as an empty array.
+  - Strategies must be grounded in extracted evidence; cite sources per strategy.
+  - Provide clear outlines, prerequisites, and tradeoffs/risks.
+  - Number of strategies guidance by output_detail:
+    - concise: 2-3 per goal
+    - standard: 3-5 per goal
+    - deep: 5-8 per goal
+
+  Output MUST be valid JSON matching the response schema.
+
+prompt: |
+  Produce goal strategy reports.
+
+  normalize_json (optional):
+  {{ normalize_json }}
+
+  evidence_json (optional):
+  {{ evidence_json }}
+
+  output_detail: {{ output_detail }}
+
+response:
+  json_schema:
+    type: object
+    properties:
+      goal_reports:
+        type: array
+        items:
+          type: object
+          properties:
+            goal: { type: string }
+            strategies:
+              type: array
+              items:
+                type: object
+                properties:
+                  name: { type: string }
+                  rationale: { type: string }
+                  outline_steps:
+                    type: array
+                    items: { type: string }
+                  prerequisites:
+                    type: array
+                    items: { type: string }
+                  tradeoffs_and_risks:
+                    type: array
+                    items: { type: string }
+                  references:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title: { type: string }
+                        url: { type: string }
+                        published_at: { type: string }
+                        accessed_at: { type: string }
+                      required: ["title", "url", "accessed_at"]
+                required: ["name", "outline_steps", "references"]
+          required: ["goal", "strategies"]
+      limitations:
+        type: array
+        items: { type: string }
+    required: ["goal_reports"]

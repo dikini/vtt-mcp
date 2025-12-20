@@ -1,0 +1,74 @@
+version: "1.0.0"
+title: "Research SOTA: Bibliography + QC"
+description: "Deduplicate references, produce global bibliography, and note limitations/gaps."
+
+parameters:
+  - key: topic_reports_json
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Optional: JSON output from 04-sota-synthesis-by-topic. If empty, infer from context."
+
+  - key: goal_reports_json
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Optional: JSON output from 05-goal-strategies. If empty, infer from context."
+
+  - key: evidence_json
+    input_type: string
+    requirement: optional
+    default: ""
+    description: "Optional: JSON output from 03-fetch-and-extract. If empty, infer from context."
+
+instructions: |
+  You are a QA and bibliography agent.
+
+  Tasks:
+  - Deduplicate references across topic reports, goal reports, and evidence.
+  - Normalize each reference to: title, url, published_at (if available), accessed_at.
+  - Provide a limitations list capturing provenance issues (e.g., no fetch tool, relied on snippets), coverage gaps, or conflicting sources.
+  - Provide a qc_summary with basic counts.
+
+  Output MUST be valid JSON matching the response schema.
+
+prompt: |
+  Perform bibliography normalization and QC.
+
+  topic_reports_json (optional):
+  {{ topic_reports_json }}
+
+  goal_reports_json (optional):
+  {{ goal_reports_json }}
+
+  evidence_json (optional):
+  {{ evidence_json }}
+
+response:
+  json_schema:
+    type: object
+    properties:
+      global_references:
+        type: array
+        items:
+          type: object
+          properties:
+            title: { type: string }
+            url: { type: string }
+            published_at: { type: string }
+            accessed_at: { type: string }
+          required: ["title", "url", "accessed_at"]
+      limitations:
+        type: array
+        items: { type: string }
+      qc_summary:
+        type: object
+        properties:
+          candidate_count: { type: number }
+          selected_source_count: { type: number }
+          evidence_count: { type: number }
+          topic_count: { type: number }
+          goal_count: { type: number }
+          reference_count: { type: number }
+        required: ["reference_count"]
+    required: ["global_references", "limitations", "qc_summary"]
