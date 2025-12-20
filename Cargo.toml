@@ -1,0 +1,8 @@
+[package]
+name = "vtt-mcp"
+version = "0.1.0"
+authors = ["Your Name <youremail@example.com>"]
+edition = "2021"
+description = "Minimal Linux voice interface using Rust for local voice-to-text and text-to-speech integration with Goose. Structure to evolve as architecture is chosen."
+license = "GPL-3.0"
+keywords = ["voice-interface", "linux", "goose", "rust", "speech-recognition", "tts"]

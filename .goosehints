@@ -1,0 +1,12 @@
+Use Beads (bd) as the canonical task tracker for this repo.
+
+When the user asks about tasks, blockers, priorities, or "what to do next":
+- Prefer running `bd ready --json` and summarizing.
+- Use `bd show <id> --json` for details.
+
+When you create/update/close/link Beads tasks:
+- Batch changes as needed, then ALWAYS run `bd sync` before ending the session.
+
+PR workflow:
+- If `gh` is available and authenticated, you may use it to help prepare PR titles/bodies.
+- Otherwise, generate PR text in markdown.

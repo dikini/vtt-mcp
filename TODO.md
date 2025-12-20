@@ -1,0 +1,6 @@
+- [ ] Research Linux-compatible voice-to-text libraries usable from Rust (local, open source)
+- [ ] Research Linux-compatible text-to-speech engines with Rust bindings
+- [ ] Investigate Goose extension/bridge integration options
+- [ ] Consider deployment models (daemon, app, bridge)
+- [ ] Survey minimal Linux UIs for Rust (TUI, GTK, etc.)
+- [ ] Update structure and Cargo.toml once architecture is chosen

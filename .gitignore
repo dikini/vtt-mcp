@@ -1,0 +1,13 @@
+/target
+**/*.rs.bk
+Cargo.lock
+.DS_Store
+*.swp
+*.tmp
+.idea
+.vscode
+
+# Goose / local tooling
+# Keep .goose/ committed so project skills/hints can be shared.
+.tooling/
+.venv/
