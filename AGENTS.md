@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## Task implementation
+
+**Rules for humans and agents when implementing a task**
+
+- As a PM review the task and add or update task specs in ./specs/task<id>.md
+
 ## Task tracking (Beads)
 
 This repository uses **Beads** (`bd`) as the canonical task / issue tracker.

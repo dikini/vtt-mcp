@@ -8,7 +8,7 @@ author:
 parameters:
   - key: topics
     input_type: string
-    requirement: required
+    requirement: user_prompt
     description: "Topics to research (comma-separated list or paragraph)."
 
   - key: goals
@@ -50,13 +50,6 @@ parameters:
       Optional seed sources (URLs and/or notes). Paste one URL per line or a markdown list.
       Use this if search/browse tools are not available or to constrain sources.
 
-  - key: seed_sources_file
-    input_type: file
-    requirement: user_prompt
-    description: |
-      Optional file containing seed URLs/notes (one URL per line or markdown list).
-      If provided, goose will substitute the *file contents* into the prompt.
-
 activities:
   - "Research state of the art for topics"
   - "Add goal-oriented strategies with outlines"
@@ -78,7 +71,6 @@ sub_recipes:
       time_horizon: "{{ time_horizon }}"
       max_candidates: "{{ max_candidates }}"
       seed_sources_text: "{{ seed_sources_text }}"
-      seed_sources_file: "{{ seed_sources_file }}"
 
   - name: triage
     path: "{{ recipe_dir }}/research-sota/subrecipes/02-triage-and-rank.yaml"
@@ -135,10 +127,8 @@ prompt: |
   - Pasted text:
   {{ seed_sources_text }}
 
-  - File contents (if provided):
-  {{ seed_sources_file }}
 
-  Execute the workflow and end with the final JSON response.
+  Execute the workflow and end with the final markdown report.
 
 response:
   json_schema:
