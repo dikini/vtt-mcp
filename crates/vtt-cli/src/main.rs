@@ -1,19 +1,42 @@
-//! Command-line interface for vtt-mcp
-//!
-//! Provides a CLI for interacting with the voice-to-text system,
-//! useful for testing and standalone usage.
+//! CLI for voice-to-text processing
+use std::thread;
+use std::time::Duration;
+use vtt_core::audio::{list_devices, write_wav, AudioCapture, AudioFormat};
 
-fn main() {
-    println!("vtt-cli v{}", env!("CARGO_PKG_VERSION"));
-    println!("Voice-to-text MCP server - CLI interface");
-    println!("Run with --help for usage information");
-}
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("VTT-CLI - Audio Capture Test\n");
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_cli_version_const() {
-        let version = env!("CARGO_PKG_VERSION");
-        assert_eq!(version, "0.1.0");
+    println!("Available audio input devices:");
+    let devices = list_devices()?;
+    if devices.is_empty() {
+        println!("  No devices found");
+        return Ok(());
     }
+
+    for dev in &devices {
+        let marker = if dev.is_default { "*" } else { " " };
+        println!("  {} {}", marker, dev.name);
+    }
+    println!();
+
+    println!("Starting 3-second audio capture at 48kHz stereo...");
+    let mut capture = AudioCapture::with_format(AudioFormat::DEFAULT)?;
+
+    capture.start()?;
+    println!("Recording...");
+
+    thread::sleep(Duration::from_secs(3));
+
+    capture.stop()?;
+    let samples = capture.take_buffer();
+
+    println!("Captured {} samples", samples.len());
+
+    let output_path = "/tmp/vtt_test_capture.wav";
+    write_wav(output_path, &samples, capture.format())?;
+    println!("Saved to: {}", output_path);
+
+    Ok(())
 }
+
+pub const VERSION: &str = env!("CARGO_PKG_VERSION");

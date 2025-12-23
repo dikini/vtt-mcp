@@ -3,12 +3,16 @@ name = "vtt-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+authors.workspace = true
 
 [dependencies]
+# Audio processing
 cpal.workspace = true
 hound.workspace = true
+
+# Error handling
 anyhow.workspace = true
 thiserror.workspace = true
 
-[dev-dependencies]
-# Test dependencies will be added as needed
+[target.'cfg(target_os = "linux")'.dependencies]
+pipewire = "0.9"

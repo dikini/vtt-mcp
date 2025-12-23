@@ -1,34 +1,24 @@
-//! Audio capture functionality
-//!
-//! This module will be implemented in task vtt-mcp-csh.1.3.
-//! It will provide real-time audio capture from system microphones.
+//! Audio capture - platform abstraction
 
-use super::error::AudioResult;
+#[cfg(target_os = "linux")]
+use super::pipewire_capture::PipeWireCapture as Impl;
 
-/// Audio capture interface (to be implemented in task 1.3)
-pub struct AudioCapture {
-    _private: (),
-}
+#[cfg(not(target_os = "linux"))]
+use super::cpal_capture::CpalCapture as Impl;
+
+use super::{AudioResult, AudioFormat};
+
+pub struct AudioCapture { inner: Impl }
 
 impl AudioCapture {
-    /// Create a new audio capture instance
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if audio device initialization fails.
-    pub fn new() -> AudioResult<Self> {
-        // Implementation in task vtt-mcp-csh.1.3
-        Ok(Self { _private: () })
+    pub fn new() -> AudioResult<Self> { Ok(Self { inner: Impl::new()? }) }
+    pub fn with_format(fmt: AudioFormat) -> AudioResult<Self> {
+        Ok(Self { inner: Impl::with_format(fmt)? })
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_audio_capture_new() {
-        let result = AudioCapture::new();
-        assert!(result.is_ok());
-    }
+    pub fn start(&mut self) -> AudioResult<()> { self.inner.start() }
+    pub fn stop(&mut self) -> AudioResult<()> { self.inner.stop() }
+    pub fn take_buffer(&mut self) -> Vec<f32> { self.inner.take_buffer() }
+    pub fn buffer_len(&self) -> usize { self.inner.buffer_len() }
+    pub fn is_active(&self) -> bool { self.inner.is_active() }
+    pub fn format(&self) -> &AudioFormat { self.inner.format() }
 }

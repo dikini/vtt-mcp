@@ -3,6 +3,7 @@ name = "vtt-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+authors.workspace = true
 
 [[bin]]
 name = "vtt-cli"
@@ -10,9 +11,4 @@ path = "src/main.rs"
 
 [dependencies]
 vtt-core = { path = "../vtt-core" }
-vtt-mcp = { path = "../vtt-mcp" }
-# CLI dependencies (clap, etc.)
-# Will be populated in vtt-mcp-csh.1.2
-
-[dev-dependencies]
-# Test dependencies
+anyhow.workspace = true
