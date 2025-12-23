@@ -8,6 +8,7 @@
 #![warn(clippy::all)]
 
 pub mod audio;
+pub mod vad;
 
 /// Core library version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

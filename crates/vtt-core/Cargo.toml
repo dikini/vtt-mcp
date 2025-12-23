@@ -1,18 +1,24 @@
-[package]
-name = "vtt-core"
-version.workspace = true
-edition.workspace = true
-license.workspace = true
-authors.workspace = true
-
-[dependencies]
-# Audio processing
-cpal.workspace = true
-hound.workspace = true
-
-# Error handling
+### /home/dikini/Projects/vtt-mcp/crates/vtt-core/Cargo.toml
+```toml
+1: [package]
+2: name = "vtt-core"
+3: version.workspace = true
+4: edition.workspace = true
+5: license.workspace = true
+6: authors.workspace = true
+7: 
+8: [dependencies]
 anyhow.workspace = true
-thiserror.workspace = true
-
-[target.'cfg(target_os = "linux")'.dependencies]
-pipewire = "0.9"
+9: # Audio processing
+10: cpal.workspace = true
+11: hound.workspace = true
+12: 
+13: # Error handling
+14: anyhow.workspace = true
+15: thiserror.workspace = true
+16: 
+17: # silero_vad = "0.1.0"  # TODO: Requires openssl-dev - using energy-based VAD for now
+18: 
+19: [target.'cfg(target_os = "linux")'.dependencies]
+20: pipewire = "0.9"
+```
