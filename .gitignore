@@ -1,13 +1,20 @@
-/target
-**/*.rs.bk
-Cargo.lock
-.DS_Store
-*.swp
-*.tmp
-.idea
-.vscode
+### /home/dikini/Projects/vtt-mcp/.gitignore
+```
+1: /target
+2: **/*.rs.bk
+3: Cargo.lock
+4: .DS_Store
+5: *.swp
+6: *.tmp
+7: .idea
+8: .vscode
+9: 
+10: # Goose / local tooling
+11: # Keep .goose/ committed so project skills/hints can be shared.
+12: .tooling/
+13: .venv/
+```
 
-# Goose / local tooling
-# Keep .goose/ committed so project skills/hints can be shared.
-.tooling/
-.venv/
+# Whisper models (large binary files)
+models/*.bin
+models/*.ggml

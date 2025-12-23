@@ -1,0 +1,1 @@
+searchState.loadedDescShard("vtt_mcp", 0, "MCP (Model Context Protocol) server implementation\nMCP server library version")
