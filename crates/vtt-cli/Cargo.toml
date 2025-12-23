@@ -12,3 +12,4 @@ path = "src/main.rs"
 [dependencies]
 vtt-core = { path = "../vtt-core" }
 anyhow.workspace = true
+clap.workspace = true

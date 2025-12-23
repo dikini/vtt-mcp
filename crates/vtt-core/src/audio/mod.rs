@@ -21,5 +21,7 @@ pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 mod tests {
     use super::*;
     #[test]
-    fn test_module_version() { assert_eq!(VERSION, "0.1.0"); }
+    fn test_module_version() {
+        assert_eq!(VERSION, "0.1.0");
+    }
 }

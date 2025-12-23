@@ -1,5 +1,5 @@
 //! Voice Activity Detection (VAD) module
-//! 
+//!
 //! This module provides speech detection functionality using an energy-based approach.
 //! For production use, consider integrating Silero VAD or similar ML-based models.
 
@@ -13,15 +13,15 @@ pub struct VadConfig {
     /// Energy threshold for speech detection (0.0 to 1.0)
     /// Default: 0.01 - values above this are considered potential speech
     pub energy_threshold: f32,
-    
+
     /// Number of frames above threshold to trigger speech detection
     /// Default: 3 - helps reduce false positives from transient noise
     pub speech_frames_threshold: usize,
-    
+
     /// Number of frames below threshold to trigger silence
     /// Default: 10 - helps prevent cutting off speech during brief pauses
     pub silence_frames_threshold: usize,
-    
+
     /// Minimum duration for speech segment (in frames)
     /// Default: 30 (~500ms at 48kHz)
     pub min_speech_duration: usize,
@@ -46,7 +46,7 @@ impl VadConfig {
             ..Default::default()
         }
     }
-    
+
     /// Create a sensitive config (lower threshold, more detections)
     pub fn sensitive() -> Self {
         Self {
@@ -56,7 +56,7 @@ impl VadConfig {
             ..Default::default()
         }
     }
-    
+
     /// Create a strict config (higher threshold, fewer detections)
     pub fn strict() -> Self {
         Self {

@@ -49,10 +49,10 @@ impl VadDetector {
     }
 
     /// Process an audio frame and detect speech
-    /// 
+    ///
     /// # Arguments
     /// * `audio` - Audio samples (f32, normalized to [-1.0, 1.0])
-    /// 
+    ///
     /// # Returns
     /// * `Ok(VadResult)` - Speech detection result
     /// * `Err(VadError)` - If buffer is invalid
@@ -63,7 +63,7 @@ impl VadDetector {
 
         // Calculate RMS energy of the frame
         let energy = calculate_rms_energy(audio);
-        
+
         // Determine if this frame has speech energy
         let has_speech_energy = energy >= self.config.energy_threshold;
 
@@ -71,7 +71,7 @@ impl VadDetector {
         let new_state = if has_speech_energy {
             self.speech_frame_count += 1;
             self.silence_frame_count = 0;
-            
+
             if self.speech_frame_count >= self.config.speech_frames_threshold {
                 VadResult::Speech
             } else {
@@ -79,7 +79,7 @@ impl VadDetector {
             }
         } else {
             self.silence_frame_count += 1;
-            
+
             if self.silence_frame_count >= self.config.silence_frames_threshold {
                 self.speech_frame_count = 0;
                 self.speech_segment_length = 0;
@@ -215,7 +215,7 @@ mod tests {
             detector.process_frame(&audio).unwrap();
         }
         assert_eq!(detector.current_state(), VadResult::Speech);
-        
+
         // Reset
         detector.reset();
         assert_eq!(detector.current_state(), VadResult::Silence);
@@ -226,7 +226,7 @@ mod tests {
     fn test_rms_energy_calculation() {
         // Silence
         assert_eq!(calculate_rms_energy(&[0.0; 100]), 0.0);
-        
+
         // Constant amplitude
         let signal: Vec<f32> = vec![0.5; 100];
         let energy = calculate_rms_energy(&signal);

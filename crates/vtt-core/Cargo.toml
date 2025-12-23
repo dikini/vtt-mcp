@@ -13,7 +13,14 @@ hound.workspace = true
 # Error handling
 anyhow.workspace = true
 thiserror.workspace = true
-whisper-rs = { version = "0.15.1", features = ["cuda"] }
+
+# Whisper - CUDA is optional, will use CPU if not available
+whisper-rs = { version = "0.15.1", default-features = false }
+num_cpus = "1.16"
 
 [target.'cfg(target_os = "linux")'.dependencies]
 pipewire = "0.9"
+
+[features]
+default = []
+cuda = ["whisper-rs/cuda"]

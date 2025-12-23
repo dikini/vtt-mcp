@@ -9,6 +9,7 @@
 
 pub mod audio;
 pub mod vad;
+pub mod whisper;
 
 /// Core library version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
