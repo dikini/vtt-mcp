@@ -13,4 +13,10 @@ license = "GPL-3.0"
 authors = ["VTT-MCP Contributors"]
 
 [workspace.dependencies]
-# Common dependencies will be added in task vtt-mcp-csh.1.2
+# Audio processing
+cpal = "0.15"
+hound = "3.5"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"

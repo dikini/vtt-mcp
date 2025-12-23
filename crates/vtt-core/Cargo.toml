@@ -5,8 +5,10 @@ edition.workspace = true
 license.workspace = true
 
 [dependencies]
-# Core dependencies for audio processing, VAD, STT
-# Will be populated in vtt-mcp-csh.1.2
+cpal.workspace = true
+hound.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
 
 [dev-dependencies]
-# Test dependencies
+# Test dependencies will be added as needed
