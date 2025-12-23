@@ -1,8 +1,16 @@
-[package]
-name = "vtt-mcp"
+[workspace]
+members = [
+    "crates/vtt-core",
+    "crates/vtt-mcp",
+    "crates/vtt-cli",
+]
+resolver = "2"
+
+[workspace.package]
 version = "0.1.0"
-authors = ["Your Name <youremail@example.com>"]
 edition = "2021"
-description = "Minimal Linux voice interface using Rust for local voice-to-text and text-to-speech integration with Goose. Structure to evolve as architecture is chosen."
 license = "GPL-3.0"
-keywords = ["voice-interface", "linux", "goose", "rust", "speech-recognition", "tts"]
+authors = ["VTT-MCP Contributors"]
+
+[workspace.dependencies]
+# Common dependencies will be added in task vtt-mcp-csh.1.2

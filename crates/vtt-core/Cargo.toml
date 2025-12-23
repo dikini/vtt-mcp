@@ -1,0 +1,12 @@
+[package]
+name = "vtt-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+# Core dependencies for audio processing, VAD, STT
+# Will be populated in vtt-mcp-csh.1.2
+
+[dev-dependencies]
+# Test dependencies
