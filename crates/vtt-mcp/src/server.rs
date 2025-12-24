@@ -1,21 +1,46 @@
 //! MCP Server implementation for Voice-to-Text functionality
 
-use crate::error::{ToMcpError, VttError, VttResult};
+use crate::error::{VttError, VttResult};
 use chrono::{DateTime, Utc};
 use rmcp::{
     handler::server::{tool::ToolRouter, wrapper::Parameters, ServerHandler},
     model::{ServerInfo, CallToolResult, Content, ErrorData as McpError},
+    service::{RequestContext, RoleServer},
+    model::{
+        ServerCapabilities, ResourcesCapability,
+        PaginatedRequestParam, ListResourcesResult, ListResourceTemplatesResult,
+        ReadResourceRequestParam, ReadResourceResult, ResourceContents,
+        SubscribeRequestParam, UnsubscribeRequestParam,
+        Resource, RawResource, Annotated,
+    },
     tool, tool_router,
 };
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, broadcast};
 use uuid::Uuid;
 
 use vtt_core::audio::{AudioCapture, list_devices};
 use vtt_core::whisper::{WhisperContext, WhisperConfig, Transcription};
+
+/// Transcription update broadcast to subscribers
+#[derive(Debug, Clone, Serialize)]
+pub struct TranscriptionUpdate {
+    pub session_id: Uuid,
+    pub text: String,
+    pub is_final: bool,
+    pub timestamp: DateTime<Utc>,
+    pub confidence: Option<f32>,
+}
+
+/// A subscriber to a session's transcription stream
+#[derive(Debug, Clone)]
+pub struct SessionSubscriber {
+    pub client_id: String,
+    pub subscribed_at: DateTime<Utc>,
+}
 
 /// MCP Server for Voice-to-Text functionality
 #[derive(Clone)]
@@ -24,15 +49,22 @@ pub struct VttMcpServer {
     transcription_history: Arc<Mutex<Vec<HistoryEntry>>>,
     audio_config: Arc<Mutex<AudioRuntimeConfig>>,
     tool_router: ToolRouter<Self>,
+    /// Track subscribers for each session's live transcription
+    subscribers: Arc<Mutex<HashMap<Uuid, Vec<SessionSubscriber>>>>,
+    /// Broadcast channel for transcription updates
+    transcription_tx: broadcast::Sender<TranscriptionUpdate>,
 }
 
 impl VttMcpServer {
     pub fn new() -> Self {
+        let (transcription_tx, _) = broadcast::channel(100);
         Self {
             sessions: Arc::new(Mutex::new(HashMap::new())),
             transcription_history: Arc::new(Mutex::new(Vec::new())),
             audio_config: Arc::new(Mutex::new(AudioRuntimeConfig::default())),
             tool_router: Self::tool_router(),
+            subscribers: Arc::new(Mutex::new(HashMap::new())),
+            transcription_tx,
         }
     }
 
@@ -54,6 +86,46 @@ impl VttMcpServer {
             history.truncate(100);
         }
     }
+
+    /// Broadcast transcription update to all subscribers
+    pub async fn broadcast_transcription(&self, update: TranscriptionUpdate) {
+        let _ = self.transcription_tx.send(update);
+    }
+
+    /// Add a subscriber to a session
+    pub async fn add_subscriber(&self, session_id: Uuid, client_id: String) -> VttResult<()> {
+        let subscriber = SessionSubscriber {
+            client_id,
+            subscribed_at: Utc::now(),
+        };
+        let mut subscribers = self.subscribers.lock().await;
+        subscribers.entry(session_id).or_insert_with(Vec::new).push(subscriber);
+        Ok(())
+    }
+
+    /// Remove a subscriber from a session
+    pub async fn remove_subscriber(&self, session_id: Uuid, client_id: &str) -> VttResult<()> {
+        let mut subscribers = self.subscribers.lock().await;
+        if let Some(subs) = subscribers.get_mut(&session_id) {
+            subs.retain(|s| s.client_id != client_id);
+            if subs.is_empty() {
+                subscribers.remove(&session_id);
+            }
+        }
+        Ok(())
+    }
+
+    /// Get subscribers for a session
+    pub async fn get_subscribers(&self, session_id: Uuid) -> Vec<SessionSubscriber> {
+        let subscribers = self.subscribers.lock().await;
+        subscribers.get(&session_id).cloned().unwrap_or_default()
+    }
+
+    /// Clean up subscribers for a session
+    pub async fn cleanup_subscribers(&self, session_id: Uuid) {
+        let mut subscribers = self.subscribers.lock().await;
+        subscribers.remove(&session_id);
+    }
 }
 
 impl Default for VttMcpServer {
@@ -67,8 +139,9 @@ impl ServerHandler for VttMcpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo {
             protocol_version: rmcp::model::ProtocolVersion::default(),
-            capabilities: rmcp::model::ServerCapabilities {
+            capabilities: ServerCapabilities {
                 tools: Some(rmcp::model::ToolsCapability::default()),
+                resources: Some(ResourcesCapability::default()), // Enable resources
                 ..Default::default()
             },
             server_info: rmcp::model::Implementation {
@@ -77,8 +150,154 @@ impl ServerHandler for VttMcpServer {
                 ..Default::default()
             },
             instructions: Some(
-                "Voice-to-Text MCP server providing real-time transcription via Whisper".to_string()
+                "Voice-to-Text MCP server providing real-time transcription via Whisper. Resources: transcript://live/{session_id}".to_string()
             ),
+        }
+    }
+
+    /// List available resources (active listening sessions)
+    fn list_resources(
+        &self,
+        _request: Option<PaginatedRequestParam>,
+        _context: RequestContext<RoleServer>,
+    ) -> impl std::future::Future<Output = Result<ListResourcesResult, McpError>> + Send + '_ {
+        async move {
+            let sessions = self.sessions.lock().await;
+            let resources: Vec<Resource> = sessions
+                .iter()
+                .filter(|(_, s)| s.status == SessionStatus::Listening)
+                .map(|(id, _)| {
+                    let raw = RawResource {
+                        uri: format!("transcript://live/{}", id),
+                        name: format!("session-{}", id),
+                        title: Some(format!("Live transcription for session {}", id)),
+                        description: Some("Real-time transcription stream".to_string()),
+                        mime_type: Some("text".to_string()),
+                        size: None,
+                        icons: None,
+                        meta: None,
+                    };
+                    Annotated::new(raw, None)
+                })
+                .collect();
+
+            Ok(ListResourcesResult {
+                resources,
+                next_cursor: None,
+                meta: None,
+            })
+        }
+    }
+
+    /// Subscribe to a session's live transcription
+    fn subscribe(
+        &self,
+        request: SubscribeRequestParam,
+        context: RequestContext<RoleServer>,
+    ) -> impl std::future::Future<Output = Result<(), McpError>> + Send + '_ {
+        async move {
+            let uri = request.uri;
+
+            // Parse session_id from URI
+            if !uri.starts_with("transcript://live/") {
+                return Err(McpError::from(VttError::invalid_params(
+                    "Invalid resource URI. Expected: transcript://live/{session_id}"
+                )));
+            }
+
+            let session_id_str = uri.strip_prefix("transcript://live/").unwrap();
+            let session_id = Uuid::parse_str(session_id_str)
+                .map_err(|_| McpError::from(VttError::invalid_params("Invalid session ID format")))?;
+
+            // Verify session exists and is listening
+            let sessions = self.sessions.lock().await;
+            if !sessions.contains_key(&session_id) {
+                return Err(McpError::from(VttError::invalid_params("Session not found")));
+            }
+            drop(sessions);
+
+            // Generate a unique client ID from connection info
+            let client_id = format!("{:?}", std::ptr::addr_of!(context));
+
+            // Add subscriber
+            self.add_subscriber(session_id, client_id.clone()).await
+                .map_err(|e| McpError::from(VttError::internal(e.to_string())))?;
+
+            tracing::info!("Client {} subscribed to transcript://live/{}", client_id, session_id);
+
+            Ok(())
+        }
+    }
+
+    /// Unsubscribe from a session's live transcription
+    fn unsubscribe(
+        &self,
+        request: UnsubscribeRequestParam,
+        context: RequestContext<RoleServer>,
+    ) -> impl std::future::Future<Output = Result<(), McpError>> + Send + '_ {
+        async move {
+            let uri = request.uri;
+
+            if !uri.starts_with("transcript://live/") {
+                return Err(McpError::from(VttError::invalid_params("Invalid resource URI")));
+            }
+
+            let session_id_str = uri.strip_prefix("transcript://live/").unwrap();
+            let session_id = Uuid::parse_str(session_id_str)
+                .map_err(|_| McpError::from(VttError::invalid_params("Invalid session ID format")))?;
+
+            let client_id = format!("{:?}", std::ptr::addr_of!(context));
+
+            self.remove_subscriber(session_id, &client_id).await
+                .map_err(|e| McpError::from(VttError::internal(e.to_string())))?;
+
+            tracing::info!("Client {} unsubscribed from transcript://live/{}", client_id, session_id);
+
+            Ok(())
+        }
+    }
+
+    /// Read current transcription state
+    fn read_resource(
+        &self,
+        request: ReadResourceRequestParam,
+        _context: RequestContext<RoleServer>,
+    ) -> impl std::future::Future<Output = Result<ReadResourceResult, McpError>> + Send + '_ {
+        async move {
+            let uri = request.uri;
+
+            if !uri.starts_with("transcript://live/") {
+                return Err(McpError::from(VttError::invalid_params("Invalid resource URI")));
+            }
+
+            let session_id_str = uri.strip_prefix("transcript://live/").unwrap();
+            let session_id = Uuid::parse_str(session_id_str)
+                .map_err(|_| McpError::from(VttError::invalid_params("Invalid session ID format")))?;
+
+            let sessions = self.sessions.lock().await;
+            let session = sessions.get(&session_id)
+                .ok_or_else(|| McpError::from(VttError::invalid_params("Session not found")))?;
+
+            let text = session.transcription.as_ref()
+                .map(|t| t.text.clone())
+                .unwrap_or_else(|| "No transcription yet".to_string());
+
+            let contents = vec![
+                ResourceContents::text(text, uri)
+            ];
+
+            Ok(ReadResourceResult { contents })
+        }
+    }
+
+    /// List resource templates (not used yet, returning empty)
+    fn list_resource_templates(
+        &self,
+        _request: Option<PaginatedRequestParam>,
+        _context: RequestContext<RoleServer>,
+    ) -> impl std::future::Future<Output = Result<ListResourceTemplatesResult, McpError>> + Send + '_ {
+        async move {
+            Ok(ListResourceTemplatesResult::default())
         }
     }
 }
@@ -222,8 +441,8 @@ impl VttMcpServer {
 
         Ok(CallToolResult::success(vec![
             Content::text(format!(
-                "Started listening session: {}\nModel: {}\nLanguage: {:?}\nGPU: {}",
-                session_id, model_path, p.language, use_gpu
+                "Started listening session: {}\nModel: {}\nLanguage: {:?}\nGPU: {}\nResource: transcript://live/{}",
+                session_id, model_path, p.language, use_gpu, session_id
             ))
         ]))
     }
@@ -277,9 +496,12 @@ impl VttMcpServer {
         session.transcription = transcription.clone();
         session.transcription_timestamp = Some(Utc::now());
 
+        // Cleanup subscribers when session ends
+        drop(sessions);
+        self.cleanup_subscribers(session_uuid).await;
+
         if let Some(tx) = &transcription {
             let tx_clone = tx.clone();
-            drop(sessions);
             self.store_transcription_in_history(session_uuid, config_clone, tx_clone).await;
         }
 
@@ -634,6 +856,42 @@ mod tests {
     async fn test_server_creation() {
         let server = VttMcpServer::new();
         assert!(server.sessions.lock().await.is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_subscriber_management() {
+        let server = VttMcpServer::new();
+        let session_id = Uuid::new_v4();
+        let client_id = "test-client".to_string();
+
+        server.add_subscriber(session_id, client_id.clone()).await.unwrap();
+        let subscribers = server.get_subscribers(session_id).await;
+        assert_eq!(subscribers.len(), 1);
+        assert_eq!(subscribers[0].client_id, client_id);
+
+        server.remove_subscriber(session_id, &client_id).await.unwrap();
+        let subscribers = server.get_subscribers(session_id).await;
+        assert_eq!(subscribers.len(), 0);
+    }
+
+    #[tokio::test]
+    async fn test_broadcast_transcription() {
+        let server = VttMcpServer::new();
+        let mut rx = server.transcription_tx.subscribe();
+
+        let update = TranscriptionUpdate {
+            session_id: Uuid::new_v4(),
+            text: "Hello world".to_string(),
+            is_final: false,
+            timestamp: Utc::now(),
+            confidence: Some(0.95),
+        };
+
+        server.broadcast_transcription(update.clone()).await;
+        
+        let received = rx.recv().await.unwrap();
+        assert_eq!(received.text, update.text);
+        assert_eq!(received.session_id, update.session_id);
     }
 
     #[test]
