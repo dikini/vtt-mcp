@@ -6,15 +6,11 @@ license.workspace = true
 authors.workspace = true
 
 [dependencies]
-# Audio processing
 cpal.workspace = true
 hound.workspace = true
-
-# Error handling
 anyhow.workspace = true
 thiserror.workspace = true
-
-# Whisper - CUDA is optional, will use CPU if not available
+tokio = { version = "1.35", features = ["sync", "macros", "test-util"] }
 whisper-rs = { version = "0.15.1", default-features = false }
 num_cpus = "1.16"
 
