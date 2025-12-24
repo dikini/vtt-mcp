@@ -199,3 +199,14 @@ mod tests {
         assert_eq!(t.duration_ms(), 1000);
     }
 }
+
+
+    pub fn check_model_available(config: &WhisperConfig) -> Result<(), WhisperError> {
+        let model_path = Path::new(&config.model_path);
+        if !model_path.exists() {
+            log::error!("Model not found: {}", model_path.display());
+            return Err(WhisperError::ModelNotFound(model_path.to_path_buf()));
+        }
+        Ok(())
+    }
+
