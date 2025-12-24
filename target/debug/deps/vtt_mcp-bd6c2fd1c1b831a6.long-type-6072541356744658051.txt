@@ -1,2 +1,0 @@
-(Tool, for<'a> fn(&'a VttMcpServer) -> Pin<Box<(dyn std::future::Future<Output = Result<AudioDevicesListResult, std::string::String>> + Send + 'a)>> {VttMcpServer::list_audio_devices})
-(Tool, for<'a> fn(&'a VttMcpServer) -> Pin<Box<(dyn std::future::Future<Output = Result<AudioDevicesListResult, std::string::String>> + Send + 'a)>> {VttMcpServer::list_audio_devices}): IntoToolRoute<VttMcpServer, _>

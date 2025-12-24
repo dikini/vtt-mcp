@@ -1,2 +1,0 @@
-(Tool, for<'a> fn(&'a VttMcpServer, std::string::String) -> Pin<Box<(dyn Future<Output = Result<rmcp::model::CallToolResult, ErrorData>> + Send + 'a)>> {VttMcpServer::echo})
-(Tool, for<'a> fn(&'a VttMcpServer, std::string::String) -> Pin<Box<(dyn Future<Output = Result<rmcp::model::CallToolResult, ErrorData>> + Send + 'a)>> {VttMcpServer::echo}): IntoToolRoute<VttMcpServer, _>

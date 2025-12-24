@@ -1,2 +1,0 @@
-(Tool, for<'a> fn(&'a VttMcpServer, std::option::Option<std::string::String>) -> Pin<Box<(dyn std::future::Future<Output = Result<LastTranscriptionResult, std::string::String>> + Send + 'a)>> {VttMcpServer::get_last_transcription})
-(Tool, for<'a> fn(&'a VttMcpServer, std::option::Option<std::string::String>) -> Pin<Box<(dyn std::future::Future<Output = Result<LastTranscriptionResult, std::string::String>> + Send + 'a)>> {VttMcpServer::get_last_transcription}): IntoToolRoute<VttMcpServer, _>

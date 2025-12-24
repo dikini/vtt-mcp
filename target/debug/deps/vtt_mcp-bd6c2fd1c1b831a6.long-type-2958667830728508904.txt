@@ -1,2 +1,0 @@
-(Tool, for<'a> fn(&'a VttMcpServer, std::string::String, std::option::Option<bool>) -> Pin<Box<(dyn std::future::Future<Output = Result<StopListeningResult, std::string::String>> + Send + 'a)>> {VttMcpServer::stop_listening})
-(Tool, for<'a> fn(&'a VttMcpServer, std::string::String, std::option::Option<bool>) -> Pin<Box<(dyn std::future::Future<Output = Result<StopListeningResult, std::string::String>> + Send + 'a)>> {VttMcpServer::stop_listening}): IntoToolRoute<VttMcpServer, _>
