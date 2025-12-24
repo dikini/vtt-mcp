@@ -14,11 +14,28 @@ struct CaptureData {
 /// PipeWire audio capture using native API
 ///
 /// Spawns a thread to run the PipeWire main loop when capturing starts.
+/// 
+/// Note: Clone creates a new capture instance that shares the same buffer
+/// and active state, but without the thread handle. This is safe because
+/// the original instance's thread will continue running until stopped.
+#[derive(Debug)]
 pub struct PipeWireCapture {
     format: AudioFormat,
     buffer: Arc<Mutex<Vec<f32>>>,
     active: Arc<Mutex<bool>>,
     thread_handle: Option<JoinHandle<()>>,
+}
+
+// Manual Clone implementation - shares buffer/active state but drops thread handle
+impl Clone for PipeWireCapture {
+    fn clone(&self) -> Self {
+        Self {
+            format: self.format.clone(),
+            buffer: self.buffer.clone(),
+            active: self.active.clone(),
+            thread_handle: None, // Don't clone the thread handle
+        }
+    }
 }
 
 impl PipeWireCapture {

@@ -7,11 +7,29 @@ use std::sync::{Arc, Mutex};
 
 type AudioBuffer = Arc<Mutex<Vec<f32>>>;
 
+/// cpal audio capture implementation
+///
+/// Provides cross-platform audio capture using the cpal library.
+/// Clone creates a new capture instance that shares the same buffer
+/// but without the active stream (if any).
+#[derive(Debug)]
 pub struct CpalCapture {
     device: Device,
     format: AudioFormat,
     stream: Option<Stream>,
     buffer: AudioBuffer,
+}
+
+// Manual Clone implementation - shares buffer but not stream
+impl Clone for CpalCapture {
+    fn clone(&self) -> Self {
+        Self {
+            device: self.device.clone(),
+            format: self.format.clone(),
+            stream: None, // Don't clone the stream
+            buffer: Arc::clone(&self.buffer),
+        }
+    }
 }
 
 impl CpalCapture {

@@ -1,0 +1,2 @@
+(Tool, for<'a> fn(&'a VttMcpServer, Parameters<TranscribeClipParams>) -> Pin<Box<(dyn std::future::Future<Output = Result<rmcp::model::CallToolResult, std::string::String>> + Send + 'a)>> {VttMcpServer::transcribe_clip})
+(Tool, for<'a> fn(&'a VttMcpServer, Parameters<TranscribeClipParams>) -> Pin<Box<(dyn std::future::Future<Output = Result<rmcp::model::CallToolResult, std::string::String>> + Send + 'a)>> {VttMcpServer::transcribe_clip}): IntoToolRoute<VttMcpServer, _>

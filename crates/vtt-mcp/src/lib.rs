@@ -6,6 +6,12 @@
 #![warn(missing_docs)]
 #![warn(clippy::all)]
 
+pub mod error;
+pub mod server;
+
+pub use error::{VttError, VttResult};
+pub use server::VttMcpServer;
+
 /// MCP server library version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 

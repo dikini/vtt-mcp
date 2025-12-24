@@ -1,13 +1,22 @@
+# Voice-to-Text MCP Server
+
 [package]
 name = "vtt-mcp"
 version.workspace = true
 edition.workspace = true
-license.workspace = true
 
 [dependencies]
 vtt-core = { path = "../vtt-core" }
-# MCP protocol dependencies
-# Will be populated in vtt-mcp-csh.1.2
-
-[dev-dependencies]
-# Test dependencies
+rmcp = { version = "0.12", features = ["server", "macros", "transport-io"] }
+tokio = { version = "1.35", features = ["full"] }
+anyhow.workspace = true
+thiserror.workspace = true
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = "0.4"
+schemars = "1.1"
+serde = "1.0"
+serde_json = "1.0"
+hound = "3.5"  # WAV file reading
+num_cpus = "1.16"

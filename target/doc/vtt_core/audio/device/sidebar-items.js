@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["default_device","device_by_name","list_devices"],"struct":["AudioDevice"]};

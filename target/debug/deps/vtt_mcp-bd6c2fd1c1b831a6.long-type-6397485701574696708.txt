@@ -1,0 +1,2 @@
+(Tool, for<'a> fn(&'a VttMcpServer, std::option::Option<std::string::String>, std::option::Option<f32>) -> Pin<Box<(dyn std::future::Future<Output = Result<AudioConfigurationResult, std::string::String>> + Send + 'a)>> {VttMcpServer::configure_audio})
+(Tool, for<'a> fn(&'a VttMcpServer, std::option::Option<std::string::String>, std::option::Option<f32>) -> Pin<Box<(dyn std::future::Future<Output = Result<AudioConfigurationResult, std::string::String>> + Send + 'a)>> {VttMcpServer::configure_audio}): IntoToolRoute<VttMcpServer, _>
