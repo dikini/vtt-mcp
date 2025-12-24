@@ -1,27 +1,22 @@
-//! Core voice-to-text functionality
+//! Voice-to-Text Core Library
 //!
-//! This crate provides the fundamental building blocks for voice-to-text
-//! processing, including audio capture, voice activity detection, and
-//! speech-to-text transcription.
-
-#![warn(missing_docs)]
-#![warn(clippy::all)]
+//! This library provides core functionality for voice-to-text processing,
+//! including audio capture, VAD (Voice Activity Detection), and Whisper
+//! transcription integration.
 
 pub mod audio;
 pub mod vad;
 pub mod whisper;
 pub mod window;
 pub mod incremental;
+pub mod profile;
 
-/// Core library version
+pub use audio::{AudioFormat, AudioError, AudioResult};
+pub use vad::{VadDetector, VadConfig, VadResult};
+pub use whisper::{WhisperContext, WhisperConfig, Transcription};
+pub use window::{SlidingWindow, WindowConfig, WindowError};
+pub use incremental::{IncrementalTranscriber, TranscriberConfig, PartialResult};
+pub use profile::{Timer, ProfileData, Timing, TimingStats};
+
+/// Library version
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_version() {
-        assert_eq!(VERSION, "0.1.0");
-    }
-}

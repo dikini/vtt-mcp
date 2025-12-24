@@ -65,7 +65,7 @@ impl IncrementalTranscriber {
         };
         
         let state = TranscriberState {
-            window: SlidingWindow::new(window_config),
+            window: SlidingWindow::with_config(window_config),
             last_text: String::new(),
         };
         
@@ -81,7 +81,7 @@ impl IncrementalTranscriber {
     }
     
     pub async fn push_audio(&self, samples: &[f32]) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let mut state = self.state.lock().await;
+        let state = self.state.lock().await;
         state.window.push(samples).await?;
         Ok(())
     }
