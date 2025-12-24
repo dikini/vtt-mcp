@@ -18,3 +18,4 @@
 # Whisper models (large binary files)
 models/*.bin
 models/*.ggml
+/target/
