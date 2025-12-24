@@ -1,0 +1,22 @@
+#!/bin/bash
+set -e
+
+# Pre-install script for vtt-mcp
+
+# Create vtt-mcp user if it doesn't exist
+if ! id vtt-mcp &>/dev/null; then
+    echo "Creating vtt-mcp user..."
+    useradd --system --home-dir /var/lib/vtt-mcp --shell /usr/sbin/nologin vtt-mcp || true
+fi
+
+# Create necessary directories
+echo "Creating vtt-mcp directories..."
+mkdir -p /var/lib/vtt-mcp/models
+mkdir -p /var/lib/vtt-mcp/sessions
+mkdir -p /var/log/vtt-mcp
+mkdir -p /etc/vtt-mcp
+
+# Set ownership
+chown -R vtt-mcp:vtt-mcp /var/lib/vtt-mcp /var/log/vtt-mcp
+
+exit 0

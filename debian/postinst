@@ -1,0 +1,60 @@
+#!/bin/bash
+set -e
+
+# Post-install script for vtt-mcp
+
+case "$1" in
+    configure)
+        echo "Configuring vtt-mcp..."
+        
+        # Create default config if it doesn't exist
+        if [ ! -f /etc/vtt-mcp/config.toml ]; then
+            echo "Creating default configuration..."
+            cat > /etc/vtt-mcp/config.toml << 'CONFIG_EOF'
+[audio]
+sample_rate = 16000
+channels = 1
+
+[vad]
+threshold = 0.01
+speech_frames = 3
+silence_frames = 10
+
+[whisper]
+model_size = "base"
+threads = 4
+enable_gpu = true
+model_path = "/var/lib/vtt-mcp/models/ggml-base.bin"
+
+[whisper.memory]
+idle_timeout_secs = 300
+max_sessions = 10
+CONFIG_EOF
+            
+            chown root:root /etc/vtt-mcp/config.toml
+            chmod 644 /etc/vtt-mcp/config.toml
+        fi
+        
+        # Download model if it doesn't exist
+        if [ ! -f /var/lib/vtt-mcp/models/ggml-base.bin ]; then
+            echo ""
+            echo "Whisper model not found."
+            echo "Please download the base model manually:"
+            echo "  wget https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin"
+            echo "  sudo cp ggml-base.bin /var/lib/vtt-mcp/models/"
+            echo ""
+        fi
+        
+        echo "vtt-mcp installation complete!"
+        ;;
+    
+    abort-upgrade|abort-remove|abort-deconfigure)
+        ;;
+    
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+        ;;
+esac
+
+exit 0
