@@ -148,7 +148,7 @@ impl VttMcpServer {
 
         let result = TranscribeClipResult {
             text: transcription.text.clone(),
-            confidence: transcription.confidence,
+            confidence: None,
             start_ms,
             end_ms: start_ms + duration_ms,
         };
@@ -560,9 +560,9 @@ impl From<Transcription> for TranscriptionResult {
     fn from(tx: Transcription) -> Self {
         Self {
             text: tx.text,
-            confidence: tx.confidence,
-            start_ms: tx.start_ms.max(0) as u64,
-            end_ms: tx.end_ms.max(0) as u64,
+            confidence: None,
+            start_ms: tx.start_timestamp.max(0) as u64,
+            end_ms: tx.end_timestamp.max(0) as u64,
         }
     }
 }

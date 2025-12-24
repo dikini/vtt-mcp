@@ -53,9 +53,9 @@ Transcribing {} samples ({} seconds)...",
 Transcription Result:"
     );
     println!("  - Text: {}", result.text);
-    println!("  - Start: {}ms", result.start_ms);
-    println!("  - End: {}ms", result.end_ms);
-    println!("  - Duration: {}ms", result.end_ms - result.start_ms);
+    println!("  - Start: {}ms", result.start_timestamp);
+    println!("  - End: {}ms", result.end_timestamp);
+    println!("  - Duration: {}ms", result.end_timestamp - result.start_timestamp);
 
     Ok(())
 }

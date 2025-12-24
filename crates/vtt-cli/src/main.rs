@@ -109,7 +109,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("─────────────────────────────────────");
     println!("{}", result.text);
     println!("─────────────────────────────────────");
-    println!("Duration: {}ms", result.end_ms - result.start_ms);
+    println!("Duration: {}ms", result.duration_ms());
     println!("─────────────────────────────────────");
 
     // Save to file if requested
