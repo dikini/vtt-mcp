@@ -6,6 +6,7 @@
 
 pub mod audio;
 pub mod vad;
+pub mod config;
 pub mod whisper;
 pub mod window;
 pub mod incremental;

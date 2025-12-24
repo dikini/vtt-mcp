@@ -1,0 +1,17 @@
+# VTT-MCP Configuration Example
+
+[audio]
+sample_rate = 16000
+channels = 1
+
+[vad]
+threshold = 0.5
+
+[whisper]
+model_size = "base"
+threads = 4
+enable_gpu = true
+
+[mcp]
+transport = "stdio"
+log_level = "info"

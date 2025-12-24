@@ -12,6 +12,9 @@ anyhow.workspace = true
 thiserror.workspace = true
 tokio = { version = "1.35", features = ["sync", "macros", "test-util", "time"] }
 chrono = "0.4"
+toml = "0.8"
+serde = { version = "1.0", features = ["derive"] }
+dirs = "5.0"
 whisper-rs = { version = "0.15.1", default-features = false }
 num_cpus = "1.16"
 
