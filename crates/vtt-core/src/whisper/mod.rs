@@ -7,11 +7,13 @@
 pub mod config;
 pub mod context;
 pub mod error;
+pub mod gpu;
 pub mod memory;
 
 pub use config::WhisperConfig;
 pub use context::WhisperContext;
 pub use error::{WhisperError, WhisperResult};
+pub use gpu::{GpuBackend, GpuDetection, GpuDeviceInfo, detect_gpu, get_gpu_info, is_gpu_available, get_gpu_message};
 pub use memory::{MemoryStats, MemoryTracker};
 
 /// Result of a transcription operation
@@ -42,3 +44,4 @@ impl Transcription {
         self.end_timestamp - self.start_timestamp
     }
 }
+

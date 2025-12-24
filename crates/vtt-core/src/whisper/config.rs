@@ -45,10 +45,19 @@ pub struct WhisperConfig {
 
 impl Default for WhisperConfig {
     fn default() -> Self {
+        // Auto-detect GPU availability
+        let use_gpu = crate::whisper::gpu::is_gpu_available();
+        
+        if use_gpu {
+            log::info!("GPU acceleration enabled: {}", crate::whisper::gpu::get_gpu_message());
+        } else {
+            log::info!("GPU acceleration not available, using CPU: {}", crate::whisper::gpu::get_gpu_message());
+        }
+        
         Self {
             model_path: "models/ggml-base.bin".to_string(),
             n_threads: num_cpus::get_physical() as i32,
-            use_gpu: true,
+            use_gpu,
             required_sample_rate: 16000,
             language: None,
             translate: false,
@@ -56,8 +65,8 @@ impl Default for WhisperConfig {
             n_max_text_tokens: 0,
             offset_ms: 0,
             duration_ms: 0,
-            idle_timeout_secs: None,  // Keep model loaded by default
-            max_sessions: 4,  // Allow up to 4 concurrent sessions
+            idle_timeout_secs: None,
+            max_sessions: 4,
         }
     }
 }
@@ -106,3 +115,4 @@ impl WhisperConfig {
         self
     }
 }
+
