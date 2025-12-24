@@ -37,3 +37,28 @@ pub enum WhisperError {
 
 /// Type alias for Whisper operation results
 pub type WhisperResult<T> = Result<T, WhisperError>;
+
+/// Transcription result from Whisper
+#[derive(Debug, Clone)]
+pub struct Transcription {
+    /// The transcribed text
+    pub text: String,
+    /// Start timestamp in milliseconds
+    pub start_timestamp: i64,
+    /// End timestamp in milliseconds
+    pub end_timestamp: i64,
+}
+
+impl Transcription {
+    pub fn new(text: String, start_timestamp: i64, end_timestamp: i64) -> Self {
+        Self {
+            text,
+            start_timestamp,
+            end_timestamp,
+        }
+    }
+
+    pub fn duration_ms(&self) -> i64 {
+        self.end_timestamp - self.start_timestamp
+    }
+}
