@@ -139,6 +139,11 @@ impl SlidingWindow {
         inner.head = 0;
         inner.len = 0;
     }
+
+    pub async fn duration_secs(&self) -> f32 {
+        let len = self.len().await;
+        len as f32 / self.config.sample_rate as f32
+    }
 }
 
 impl WindowInner {

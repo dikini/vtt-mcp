@@ -1642,11 +1642,13 @@ name = "vtt-core"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "cpal",
  "hound",
  "num_cpus",
  "pipewire",
  "thiserror 1.0.69",
+ "tokio",
  "whisper-rs",
 ]
 

@@ -10,7 +10,8 @@ cpal.workspace = true
 hound.workspace = true
 anyhow.workspace = true
 thiserror.workspace = true
-tokio = { version = "1.35", features = ["sync", "macros", "test-util"] }
+tokio = { version = "1.35", features = ["sync", "macros", "test-util", "time"] }
+chrono = "0.4"
 whisper-rs = { version = "0.15.1", default-features = false }
 num_cpus = "1.16"
 
