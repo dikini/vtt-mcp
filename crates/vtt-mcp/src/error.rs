@@ -30,7 +30,7 @@ pub enum VttError {
 
     /// Device not found
     #[error("Device not found: {0}")]
-    /// Requested audio device not found(String),
+    DeviceNotFound(String),
 
     /// Session error
     #[error("Session error: {0}")]
