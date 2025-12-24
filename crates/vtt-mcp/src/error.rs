@@ -4,6 +4,9 @@ use thiserror::Error;
 
 /// VTT MCP server error type
 #[derive(Error, Debug)]
+/// VTT-MCP error types
+///
+/// Represents all errors that can occur in the VTT-MCP server.
 pub enum VttError {
     /// Audio capture error
     #[error("Audio error: {0}")]
@@ -27,7 +30,7 @@ pub enum VttError {
 
     /// Device not found
     #[error("Device not found: {0}")]
-    DeviceNotFound(String),
+    /// Requested audio device not found(String),
 
     /// Session error
     #[error("Session error: {0}")]

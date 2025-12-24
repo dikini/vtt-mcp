@@ -28,6 +28,10 @@ use vtt_core::whisper::language::{Language, SUPPORTED_LANGUAGES, supported_codes
 
 /// Transcription update broadcast to subscribers
 #[derive(Debug, Clone, Serialize)]
+/// Real-time transcription update sent to subscribers
+///
+/// Emitted when new transcription results are available during
+/// a listening session.
 pub struct TranscriptionUpdate {
     pub session_id: Uuid,
     pub text: String,
@@ -38,6 +42,9 @@ pub struct TranscriptionUpdate {
 
 /// A subscriber to a session's transcription stream
 #[derive(Debug, Clone)]
+/// Subscriber receiving transcription updates
+///
+/// Holds a receiver for broadcast channel updates.
 pub struct SessionSubscriber {
     pub client_id: String,
     pub subscribed_at: DateTime<Utc>,
@@ -45,6 +52,10 @@ pub struct SessionSubscriber {
 
 /// MCP Server for Voice-to-Text functionality
 #[derive(Clone)]
+/// VTT MCP Server implementation
+///
+/// Main server implementing the Model Context Protocol for
+/// voice-to-text functionality.
 pub struct VttMcpServer {
     sessions: Arc<Mutex<HashMap<Uuid, SessionState>>>,
     transcription_history: Arc<Mutex<Vec<HistoryEntry>>>,
@@ -736,6 +747,9 @@ enum SessionStatus {
 }
 
 #[derive(Clone)]
+/// Entry in transcript history
+///
+/// Stores a completed transcription with metadata.
 struct HistoryEntry {
     session_id: Uuid,
     timestamp: DateTime<Utc>,
