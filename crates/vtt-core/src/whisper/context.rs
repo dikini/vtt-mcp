@@ -67,10 +67,20 @@ impl WhisperContext {
 
         let mut params = whisper_rs::FullParams::new(whisper_rs::SamplingStrategy::Greedy { best_of: 0 });
         params.set_n_threads(self.config.n_threads);
-        params.set_translate(false);
-        params.set_language(None);
-        params.set_offset_ms(0);
-        params.set_duration_ms(0);
+        params.set_translate(self.config.translate);
+
+        // Handle language parameter
+        let lang = self.config.language.as_deref();
+        if lang == Some("auto") || lang == None {
+            params.set_language(None);
+            log::debug!("Using auto-detect language");
+        } else {
+            params.set_language(lang);
+            log::debug!("Using language: {:?}", lang);
+        }
+
+        params.set_offset_ms(self.config.offset_ms);
+        params.set_duration_ms(self.config.duration_ms);
         params.set_token_timestamps(true);
         params.set_single_segment(false);
         params.set_print_special(false);

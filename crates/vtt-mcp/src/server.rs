@@ -24,6 +24,7 @@ use uuid::Uuid;
 
 use vtt_core::audio::{AudioCapture, list_devices};
 use vtt_core::whisper::{WhisperContext, WhisperConfig, Transcription};
+use vtt_core::whisper::language::{Language, SUPPORTED_LANGUAGES, supported_codes, display_name};
 
 /// Transcription update broadcast to subscribers
 #[derive(Debug, Clone, Serialize)]
@@ -305,6 +306,30 @@ impl ServerHandler for VttMcpServer {
 /// Tool router implementation
 #[tool_router]
 impl VttMcpServer {
+    /// List supported languages
+    #[tool(description = "List all supported languages for transcription")]
+    async fn list_languages(
+        &self,
+        _params: Parameters<ListLanguagesParams>,
+    ) -> Result<CallToolResult, McpError> {
+        let mut lines = vec!["Supported Languages:".to_string()];
+        
+        // Add auto-detect option
+        lines.push(format!("  auto - Auto-detect language"));
+        
+        // Add all supported languages
+        for lang in SUPPORTED_LANGUAGES {
+            lines.push(format!("  {} - {}", lang.code, lang.name));
+        }
+        
+        lines.push(String::new());
+        lines.push(format!("Total: {} languages", SUPPORTED_LANGUAGES.len() + 1));
+        
+        Ok(CallToolResult::success(vec![
+            Content::text(lines.join("\n"))
+        ]))
+    }
+
     /// Transcribe an audio clip file
     #[tool(description = "Transcribe an audio clip from a WAV file")]
     async fn transcribe_clip(
@@ -334,6 +359,16 @@ impl VttMcpServer {
             return Err(McpError::from(VttError::NoAudioData("Audio file contains no samples".to_string())));
         }
 
+        // Validate language if provided
+        if let Some(ref lang) = p.language {
+            if lang != "auto" && !Language::is_valid(lang) {
+                return Err(McpError::from(VttError::invalid_params(format!(
+                    "Unsupported language code: '{}'. Use list_languages tool to see supported languages.",
+                    lang
+                ))));
+            }
+        }
+
         let model_path = p.model_path
             .or_else(|| std::env::var("WHISPER_MODEL").ok())
             .unwrap_or_else(|| "models/ggml-base.bin".to_string());
@@ -346,9 +381,14 @@ impl VttMcpServer {
             .or_else(|| std::env::var("WHISPER_USE_GPU").ok().and_then(|g| g.parse().ok()))
             .unwrap_or(true);
 
+        // Convert language option for Whisper config (None means auto-detect)
+        let language = p.language.as_ref().and_then(|l| {
+            if l == "auto" { None } else { Some(l.clone()) }
+        });
+
         let config = WhisperConfig {
             model_path,
-            language: None,
+            language,
             use_gpu,
             n_threads: threads,
             ..Default::default()
@@ -384,10 +424,11 @@ impl VttMcpServer {
 
         Ok(CallToolResult::success(vec![
             Content::text(format!(
-                "Transcription: {}\nConfidence: {:?}\nDuration: {}ms",
+                "Transcription: {}\nConfidence: {:?}\nDuration: {}ms\nLanguage: {:?}",
                 result.text,
                 result.confidence,
-                result.end_ms - result.start_ms
+                result.end_ms - result.start_ms,
+                p.language.unwrap_or_else(|| "auto".to_string())
             ))
         ]))
     }
@@ -415,9 +456,24 @@ impl VttMcpServer {
             .or_else(|| std::env::var("WHISPER_USE_GPU").ok().and_then(|g| g.parse().ok()))
             .unwrap_or(true);
 
+        // Validate language if provided
+        if let Some(ref lang) = p.language {
+            if lang != "auto" && !Language::is_valid(lang) {
+                return Err(McpError::from(VttError::invalid_params(format!(
+                    "Unsupported language code: '{}'. Use list_languages tool to see supported languages.",
+                    lang
+                ))));
+            }
+        }
+
+        // Convert language option for Whisper config (None means auto-detect)
+        let language = p.language.as_ref().and_then(|l| {
+            if l == "auto" { None } else { Some(l.clone()) }
+        });
+
         let config = WhisperConfig {
             model_path: model_path.clone(),
-            language: p.language.clone(),
+            language,
             use_gpu,
             n_threads: threads,
             ..Default::default()
@@ -439,10 +495,14 @@ impl VttMcpServer {
         let mut sessions = self.sessions.lock().await;
         sessions.insert(session_id, session);
 
+        let language_display = p.language.as_ref()
+            .map(|l| display_name(l))
+            .unwrap_or_else(|| "Auto-detect".to_string());
+
         Ok(CallToolResult::success(vec![
             Content::text(format!(
-                "Started listening session: {}\nModel: {}\nLanguage: {:?}\nGPU: {}\nResource: transcript://live/{}",
-                session_id, model_path, p.language, use_gpu, session_id
+                "Started listening session: {}\nModel: {}\nLanguage: {}\nGPU: {}\nResource: transcript://live/{}",
+                session_id, model_path, language_display, use_gpu, session_id
             ))
         ]))
     }
@@ -701,10 +761,15 @@ impl Default for AudioRuntimeConfig {
 // Tool parameter types
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
+pub struct ListLanguagesParams {}
+
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 pub struct TranscribeClipParams {
     pub audio_file: String,
     #[serde(default)]
     pub model_path: Option<String>,
+    #[serde(default)]
+    pub language: Option<String>,
     #[serde(default)]
     pub use_gpu: Option<bool>,
     #[serde(default)]
