@@ -26,6 +26,11 @@ num_cpus = "1.16"
 name = "vtt-mcp"
 maintainer = "VTT-MCP Contributors <info@example.com>"
 copyright = "2025, VTT-MCP Contributors"
+
+[package.metadata.deb]
+name = "vtt-mcp"
+maintainer = "VTT-MCP Contributors <info@example.com>"
+copyright = "2025, VTT-MCP Contributors"
 license = "GPL-3.0"
 description = "Voice-to-Text MCP Server"
 extended-description = "vtt-mcp provides real-time transcription"
@@ -38,7 +43,6 @@ deb = "libc6 (>= 2.27)"
 [package.metadata.deb.build-dependencies]
 deb = "clang, libssl-dev, pkg-config"
 
-[package.metadata.deb]
 assets = [
     ["target/release/vtt-mcp", "usr/bin/", "755"],
     ["target/release/vtt-cli", "usr/bin/", "755"],
