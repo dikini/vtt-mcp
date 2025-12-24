@@ -3,6 +3,10 @@
 ## Description
 Create MCP tool for one-shot transcription. Handle duration and model parameters. Wire up to vtt-core transcription engine. Return JSON with text and confidence. ~90min
 
+**Status:** ✅ COMPLETE (2025-12-23) | ✅ MCP Integration Complete (2025-12-24)
+
+---
+
 ## Implementation (COMPLETED 2025-12-23)
 
 ### What was implemented:
@@ -32,12 +36,21 @@ Create MCP tool for one-shot transcription. Handle duration and model parameters
    - Whisper context creation errors
    - Transcription errors
 
+### MCP Protocol Integration (2025-12-24):
+- [x] Integrated with rmcp `#[tool_router]` macro
+- [x] Uses `Parameters<TranscribeClipParams>` wrapper
+- [x] Returns `Result<CallToolResult, McpError>`
+- [x] Proper JSON schema generation via `JsonSchema` derive
+- [x] Error conversion to `rmcp::model::ErrorData`
+
 ### Files Modified:
 - crates/vtt-mcp/src/server.rs: Added transcribe_clip tool
 - crates/vtt-mcp/Cargo.toml: Added hound dependency
 
-### Dependencies Added:
-- hound = "3.5": WAV file reading
+---
 
-## Status
-✅ COMPLETE - Tool implemented and tested.
+## Dependencies Added:
+```toml
+[dependencies]
+hound = "3.5"  # WAV file parsing
+```
