@@ -116,3 +116,66 @@ impl WhisperConfig {
     }
 }
 
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_whisper_config_default() {
+        let config = WhisperConfig::default();
+        assert_eq!(config.required_sample_rate, 16000);
+        assert_eq!(config.model_path, "models/ggml-base.bin");
+        assert!(!config.translate);
+    }
+
+    #[test]
+    fn test_whisper_config_builder() {
+        let config = WhisperConfig::default()
+            .with_model_path("custom/model.bin")
+            .with_language("en")
+            .with_threads(8)
+            .with_gpu(false)
+            .with_translation(true);
+        
+        assert_eq!(config.model_path, "custom/model.bin");
+        assert_eq!(config.language, Some("en".to_string()));
+        assert_eq!(config.n_threads, 8);
+        assert!(!config.use_gpu);
+        assert!(config.translate);
+    }
+
+    #[test]
+    fn test_with_idle_timeout() {
+        let config = WhisperConfig::default()
+            .with_idle_timeout(Some(60));
+        
+        assert_eq!(config.idle_timeout_secs, Some(60));
+    }
+
+    #[test]
+    fn test_with_max_sessions() {
+        let config = WhisperConfig::default()
+            .with_max_sessions(20);
+        
+        assert_eq!(config.max_sessions, 20);
+    }
+
+    #[test]
+    fn test_threads_minimum() {
+        let config = WhisperConfig::default()
+            .with_threads(0);
+        
+        assert_eq!(config.n_threads, 1); // Should be clamped to 1
+    }
+
+    #[test]
+    fn test_max_sessions_minimum() {
+        let config = WhisperConfig::default()
+            .with_max_sessions(0);
+        
+        assert_eq!(config.max_sessions, 1); // Should be clamped to 1
+    }
+}

@@ -115,3 +115,62 @@ impl Drop for CpalCapture {
         let _ = self.stop();
     }
 }
+
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cpal_capture_with_format() {
+        let format = AudioFormat::DEFAULT;
+        let result = CpalCapture::with_format(format);
+        // May fail in CI without audio devices
+        let _ = result;
+    }
+
+    #[test]
+    fn test_cpal_capture_clone() {
+        let format = AudioFormat::DEFAULT;
+        let capture1 = match CpalCapture::with_format(format) {
+            Ok(c) => c,
+            Err(_) => return, // Skip if no device
+        };
+        
+        let capture2 = capture1.clone();
+        
+        // Clones should share buffer but not stream
+        assert_eq!(capture1.format().sample_rate, capture2.format().sample_rate);
+        assert!(!capture2.is_active());
+    }
+
+    #[test]
+    fn test_cpal_buffer_operations() {
+        let format = AudioFormat::DEFAULT;
+        let mut capture = match CpalCapture::with_format(format) {
+            Ok(c) => c,
+            Err(_) => return, // Skip if no device
+        };
+        
+        // Initially empty
+        assert_eq!(capture.buffer_len(), 0);
+        
+        // Take buffer should return empty
+        let buffer = capture.take_buffer();
+        assert_eq!(buffer.len(), 0);
+    }
+
+    #[test]
+    fn test_cpal_format_access() {
+        let format = AudioFormat::DEFAULT;
+        let capture = match CpalCapture::with_format(format) {
+            Ok(c) => c,
+            Err(_) => return, // Skip if no device
+        };
+        
+        let fmt = capture.format();
+        assert_eq!(fmt.sample_rate, 16000);
+        assert_eq!(fmt.channels, 1);
+    }
+}
