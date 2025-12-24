@@ -13,7 +13,7 @@ pub mod profile;
 
 pub use audio::{AudioFormat, AudioError, AudioResult};
 pub use vad::{VadDetector, VadConfig, VadResult};
-pub use whisper::{WhisperContext, WhisperConfig, Transcription};
+pub use whisper::{WhisperContext, WhisperConfig, Transcription, MemoryStats, MemoryTracker};
 pub use window::{SlidingWindow, WindowConfig, WindowError};
 pub use incremental::{IncrementalTranscriber, TranscriberConfig, PartialResult};
 pub use profile::{Timer, ProfileData, Timing, TimingStats};

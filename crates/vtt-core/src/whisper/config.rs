@@ -34,6 +34,13 @@ pub struct WhisperConfig {
 
     /// Duration in milliseconds to transcribe
     pub duration_ms: i32,
+
+    /// Memory management: idle timeout in seconds before unloading model
+    /// Set to None to keep model loaded permanently
+    pub idle_timeout_secs: Option<u64>,
+
+    /// Memory management: maximum concurrent sessions allowed
+    pub max_sessions: usize,
 }
 
 impl Default for WhisperConfig {
@@ -49,6 +56,8 @@ impl Default for WhisperConfig {
             n_max_text_tokens: 0,
             offset_ms: 0,
             duration_ms: 0,
+            idle_timeout_secs: None,  // Keep model loaded by default
+            max_sessions: 4,  // Allow up to 4 concurrent sessions
         }
     }
 }
@@ -81,6 +90,19 @@ impl WhisperConfig {
     /// Create a new config for translation
     pub fn with_translation(mut self, translate: bool) -> Self {
         self.translate = translate;
+        self
+    }
+
+    /// Set idle timeout for model unloading (in seconds)
+    /// Set to None to keep model loaded permanently
+    pub fn with_idle_timeout(mut self, timeout_secs: Option<u64>) -> Self {
+        self.idle_timeout_secs = timeout_secs;
+        self
+    }
+
+    /// Set maximum concurrent sessions
+    pub fn with_max_sessions(mut self, max_sessions: usize) -> Self {
+        self.max_sessions = max_sessions.max(1);
         self
     }
 }

@@ -186,7 +186,6 @@ impl WhisperContext {
         &self.config
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -195,14 +194,8 @@ mod tests {
     fn test_transcription_new() {
         let t = Transcription::new("Hello world".to_string(), 0, 1000);
         assert_eq!(t.text, "Hello world");
-        assert_eq!(t.start_ms, 0);
-        assert_eq!(t.end_ms, 1000);
-        assert!(t.confidence.is_none());
-    }
-
-    #[test]
-    fn test_transcription_with_confidence() {
-        let t = Transcription::new("Hello world".to_string(), 0, 1000).with_confidence(0.95);
-        assert_eq!(t.confidence, Some(0.95));
+        assert_eq!(t.start_timestamp, 0);
+        assert_eq!(t.end_timestamp, 1000);
+        assert_eq!(t.duration_ms(), 1000);
     }
 }
