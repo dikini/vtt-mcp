@@ -7,8 +7,10 @@ on:
 
 jobs:
   release:
-    name: Build release artifacts and publish
+    name: Build release artifacts, sign and publish
     runs-on: ubuntu-latest
+    env:
+      RUST_BACKTRACE: 1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,8 +42,39 @@ jobs:
           tar -czf "${PKG_NAME}.tar.gz" "${PKG_NAME}"
           sha256sum "${PKG_NAME}.tar.gz" > "${PKG_NAME}.tar.gz.sha256"
 
+      - name: Install GnuPG
+        run: sudo apt-get update && sudo apt-get install -y gnupg
+
+      - name: Import GPG key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -e
+          export GNUPGHOME="$(mktemp -d)"
+          chmod 700 "$GNUPGHOME"
+          echo "$GPG_PRIVATE_KEY" > private.key
+          gpg --batch --import private.key
+          KEY_FPR=$(gpg --list-secret-keys --with-colons | awk -F: '/^fpr:/ {print $10; exit}')
+          if [ -n "$KEY_FPR" ]; then
+            echo "$KEY_FPR:6:" | gpg --import-ownertrust || true
+          fi
+          echo "Imported key fingerprint: $KEY_FPR"
+
+      - name: Sign artifacts with GPG
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -e
+          # Use loopback pinentry mode to provide passphrase non-interactively
+          for f in release/*.tar.gz; do
+            echo "Signing $f"
+            gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" --output "$f.sig" --detach-sign "$f"
+          done
+          ls -la release || true
+
       - name: Create GitHub Release and upload artifacts
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ github.ref_name }}
-          files: release/*.tar.gz,release/*.sha256
+          files: release/*
