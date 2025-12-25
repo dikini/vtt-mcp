@@ -24,3 +24,4 @@ models/*.ggml
 *.log
 *.tmp
 
+vtt-mcp/
