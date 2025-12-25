@@ -19,3 +19,8 @@
 models/*.bin
 models/*.ggml
 /target/
+# Ignore build artifacts and temporary files
+/target/
+*.log
+*.tmp
+
