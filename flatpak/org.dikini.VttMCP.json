@@ -1,0 +1,27 @@
+{
+  "app-id": "org.dikini.VttMCP",
+  "runtime": "org.freedesktop.Platform",
+  "runtime-version": "23.08",
+  "sdk": "org.freedesktop.Sdk",
+  "sdk-extensions": ["org.freedesktop.Sdk.Extension.rust-stable"],
+  "command": "vtt-mcp",
+  "finish-args": [
+    "--share=network",
+    "--share=ipc",
+    "--socket=pulseaudio",
+    "--socket=wayland",
+    "--talk-name=org.freedesktop.portal.Desktop"
+  ],
+  "modules": [
+    {
+      "name": "vtt-mcp",
+      "buildsystem": "simple",
+      "build-commands": [
+        "cargo install --path . --root /app --locked --verbose"
+      ],
+      "sources": [
+        { "type": "dir", "path": "." }
+      ]
+    }
+  ]
+}
