@@ -1,0 +1,47 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Build release artifacts and publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust (stable)
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Build (release)
+        run: cargo build --workspace --release
+
+      - name: Package binaries
+        run: |
+          set -e
+          mkdir -p release
+          REF_NAME=${{ github.ref_name }}
+          PKG_NAME="vtt-mcp-${REF_NAME}"
+          BIN_DIR=target/release
+          if [ ! -d "$BIN_DIR" ]; then echo "No build output at $BIN_DIR"; exit 1; fi
+          cd "$BIN_DIR"
+          EXES=$(find . -maxdepth 1 -type f -executable -printf '%f\n' | sed 's|^\./||' | grep -v '^deps$' || true)
+          if [ -z "$EXES" ]; then echo "No executables found in $BIN_DIR"; exit 1; fi
+          mkdir -p ../../release/"${PKG_NAME}"
+          for e in $EXES; do cp "$e" ../../release/"${PKG_NAME}/"; done
+          cd ../../release
+          tar -czf "${PKG_NAME}.tar.gz" "${PKG_NAME}"
+          sha256sum "${PKG_NAME}.tar.gz" > "${PKG_NAME}.tar.gz.sha256"
+
+      - name: Create GitHub Release and upload artifacts
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ github.ref_name }}
+          files: release/*.tar.gz,release/*.sha256
